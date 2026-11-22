@@ -1,1 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MathLab 3D — Interactive Mathematics Project</title>
+<style>
+:root{--ink:#14213d;--blue:#2b59ff;--coral:#ff5a4e;--sun:#ffc53d;--mint:#1fb58f;--mute:#4a5878;--grid:#dbe8f4}
+*{box-sizing:border-box}[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+body{margin:0;color:var(--ink);background:linear-gradient(var(--grid) 1px,transparent 1px) 0 0/26px 26px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/26px 26px,#f6faff;font:16px/1.55 "Trebuchet MS","Avenir Next",system-ui,sans-serif}
+header,main,footer{max-width:1180px;margin:auto;padding:0 20px}
+header{padding-top:24px}h1{margin:0;font-size:clamp(32px,6vw,54px);line-height:1;letter-spacing:-.02em}header p{margin:6px 0 0;color:var(--mute)}
+nav{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;max-width:1180px;margin:auto;padding:12px 20px;background:#f6faffee}
+nav button,.chips button,.go{border:2px solid var(--ink);background:#fff;border-radius:10px;padding:7px 13px;font-weight:700;cursor:pointer}
+nav button[aria-selected=true],.chips button:hover,.go:hover{background:var(--ink);color:#fff}
+.go.main{background:var(--blue);color:#fff;border-color:var(--blue)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+main{padding-bottom:50px}
+.card{background:#fff;border:2px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 var(--ink);padding:20px;min-width:0}
+.lab{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
+.lab>.card:first-child{position:sticky;top:70px}
+h2{margin:0 0 10px;font-size:26px}h3{margin:0 0 4px;font-size:16px}
+canvas,svg{width:100%;display:block;border-radius:10px;background:#eef5ff;touch-action:pan-y}
+canvas{height:360px;cursor:grab}svg{cursor:pointer}svg text{font-size:11px;fill:var(--mute);font-weight:700}
+.lbl{display:block;font-weight:700;color:var(--mute);margin:12px 0 4px}
+input,select{border:2px solid var(--ink);border-radius:10px;padding:8px 12px;background:#fff;max-width:100%}
+input[type=range]{padding:0;border:0;width:100%;accent-color:var(--blue)}
+.big{width:100%;font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}.mid{width:100%}
+.out{font-size:clamp(22px,4vw,32px);font-weight:800;color:var(--blue);margin:12px 0 4px;overflow-wrap:anywhere}
+.formula{display:inline-block;background:#fff4cc;border:2px dashed var(--ink);border-radius:10px;padding:3px 12px;font-weight:800}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.chips button{padding:2px 10px;font-size:14px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:24px}
+.fact{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:12px 14px}.fact p{margin:0;color:var(--mute)}
+.hint{color:var(--mute);font-size:14px;margin:8px 0 0}hr{border:0;border-top:2px dashed #b8c8dc;margin:18px 0}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.row label{font-weight:700;color:var(--mute);font-size:14px}.row input,.row select{width:100%;margin-top:3px}
+.ch{line-height:2.4;overflow-wrap:anywhere}.ch i{display:inline-block;min-width:28px;text-align:center;font-style:normal;font-weight:800;padding:0 7px;border-radius:8px;color:#fff;margin:0 2px}
+.ch .a{background:var(--blue)}.ch .b{background:var(--coral)}.ch .x{opacity:.35;text-decoration:line-through}
+.fr{display:inline-flex;flex-direction:column;align-items:flex-start}.fr>div:first-child{border-bottom:3px solid var(--ink)}
+.bar{height:12px;border-radius:6px;background:var(--mint);margin-top:4px}
+.ex{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed #b8c8dc}
+.ok{color:#0b8a6a;font-weight:800}.bad{color:#c2362b;font-weight:800}
+label.ck{display:block;padding:3px 0}
+footer{color:var(--mute);padding-bottom:30px;font-size:14px}
+@media(max-width:820px){.lab{grid-template-columns:1fr}.lab>.card:first-child{position:static}canvas{height:290px}.row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><h1>MathLab 3D</h1><p>Type any number, drag the model, and watch the mathematics change.</p></header>
+<nav id="tabs" role="tablist" aria-label="Topics"></nav>
+<main id="app"></main>
+<footer>MathLab 3D · Everything is calculated in your browser, with exact whole-number results for very large numbers.</footer>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const sup=x=>String(x).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).replace('-','⁻');
+const fmt=b=>b.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const fd=f=>String(+f.toPrecision(12));
+const num=v=>{v=String(v).trim().replace(/[\s,_]/g,'');if(/^-?\d+$/.test(v))return{i:BigInt(v),f:Number(v)};const f=Number(v);return v&&isFinite(f)?{f}:null};
+const isqrt=n=>{if(n<2n)return n;let x=n,y=(x+1n)>>1n;while(y<x){x=y;y=(x+n/x)>>1n}return x};
+const icbrt=n=>{if(n<2n)return n;let x=1n<<BigInt(Math.ceil(n.toString(2).length/3)+1);for(;;){const y=(2n*x+n/(x*x))/3n;if(y>=x)return x;x=y}};
+const cards=a=>a.map(([h,p])=>`<div class="fact"><h3>${h}</h3><p>${p}</p></div>`).join('');
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 
+/* ---------- tiny 3D engine (canvas, no libraries) ---------- */
+const BL=[43,89,255],CO=[255,90,78];
+function vox(n,th,zo,has,col){const F=[],h=n/2;for(let x=0;x<n;x++)for(let y=0;y<n;y++)for(let z=0;z<n;z++){if(!has(x,y,z))continue;const c=col(x,y,z);for(let a=0;a<3;a++)for(const s of[-1,1]){const d=[0,0,0];d[a]=s;if(has(x+d[0],y+d[1],z+d[2]))continue;const b=(a+1)%3,e=(a+2)%3,p=[];for(const[u,v]of[[0,0],[1,0],[1,1],[0,1]]){const q=[x,y,z];q[a]+=s>0?1:0;q[b]+=u;q[e]+=v;p.push([q[0]-h,q[1]-h,q[2]*th-zo])}F.push({p,n:d,c})}}return F}
+function Scene(cv){const c=cv.getContext('2d');let yaw=.6,pit=.6,zm=1,F=[],span=1,drag=null,spin=!matchMedia('(prefers-reduced-motion:reduce)').matches;
+ const clampP=v=>Math.min(1.5,Math.max(.1,v));
+ function draw(){const d=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d)}c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,w,h);
+  const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pit),sp=Math.sin(pit),s=Math.min(w,h)/(span*1.9)*zm;
+  const T=p=>{const x=p[0]*cy-p[1]*sy,y=p[0]*sy+p[1]*cy;return[x,y*cp-p[2]*sp,y*sp+p[2]*cp]};
+  const out=[];for(const f of F){const n=T(f.n);if(n[1]>=0)continue;const q=f.p.map(T);out.push({q,d:q.reduce((a,p)=>a+p[1],0),b:Math.min(1,.62+.38*Math.max(0,-.35*n[0]+.5*n[2]-.4*n[1])),c:f.c})}
+  out.sort((a,b)=>b.d-a.d);c.lineWidth=1;c.lineJoin='round';c.strokeStyle='rgba(255,255,255,.75)';
+  for(const o of out){c.beginPath();o.q.forEach((p,i)=>c[i?'lineTo':'moveTo'](w/2+p[0]*s,h/2+6-p[2]*s));c.closePath();c.fillStyle=`rgb(${o.c.map(v=>Math.round(v*o.b))})`;c.fill();c.stroke()}}
+ cv.tabIndex=0;
+ cv.onpointerdown=e=>{drag=[e.clientX,e.clientY];spin=false;cv.setPointerCapture(e.pointerId)};
+ cv.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.01;pit=clampP(pit+(e.clientY-drag[1])*.008);drag=[e.clientX,e.clientY]};
+ cv.onpointerup=cv.onpointercancel=()=>drag=null;
+ cv.onwheel=e=>{e.preventDefault();zm=Math.min(2.5,Math.max(.5,zm*(e.deltaY<0?1.08:.92)))};
+ cv.onkeydown=e=>{const k={ArrowLeft:[-.12,0],ArrowRight:[.12,0],ArrowUp:[0,-.1],ArrowDown:[0,.1]}[e.key];if(k){e.preventDefault();spin=false;yaw+=k[0];pit=clampP(pit+k[1])}};
+ return{set(f,s){F=f;span=s},tick(){if(cv.offsetParent){if(spin&&!drag)yaw+=.005;draw()}}}}
+
+/* ---------- page structure ---------- */
+const TABS=[['squares','Square numbers'],['cubes','Cube numbers'],['angles','Angles'],['indices','Indices'],['practice','Practice'],['project','Project guide']];
+$('#tabs').innerHTML=TABS.map(([id,t])=>`<button role="tab" data-t="${id}">${t}</button>`).join('');
+function show(id){if(!TABS.some(t=>t[0]===id))id='squares';$$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===id));$$('.topic').forEach(s=>s.hidden=s.id!==id);try{history.replaceState(null,'','#'+id)}catch(e){}}
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.t)};
+
+const mach=(id,k,title,formula,def,facts)=>`<section id="${id}" class="topic" role="tabpanel" hidden>
+<div class="lab"><div class="card"><canvas id="${id}Cv" aria-label="3D ${k==2?'square array':'cube'} model. Drag or use arrow keys to rotate."></canvas><p class="hint" id="${id}Cap"></p>${k==3?'<label class="lbl" for="cuL">Layers shown</label><input type="range" id="cuL" min="1" max="4" value="4">':''}</div>
+<div class="card"><h2>${title}</h2><label class="lbl" for="${id}N">Type any number</label><input class="big" id="${id}N" inputmode="decimal" autocomplete="off" value="${def}">
+<p><span class="formula">${formula}</span></p><div class="out" id="${id}Out" aria-live="polite"></div><p id="${id}Exp"></p>
+<div class="chips" aria-label="Quick examples">${Array.from({length:12},(_,i)=>`<button data-v="${i+1}">${i+1}${sup(k)} = ${(i+1)**k}</button>`).join('')}</div><hr>
+<label class="lbl" for="${id}In">Is it a ${k==2?'square':'cube'} number? Test any whole number</label><input class="mid" id="${id}In" inputmode="numeric" autocomplete="off" placeholder="e.g. ${k==2?'1225':'3375'}"><p id="${id}Res" aria-live="polite"></p></div></div>
+<div class="facts">${cards(facts)}</div></section>`;
+
+const angleSec=`<section id="angles" class="topic" role="tabpanel" hidden><div class="lab"><div class="card">
+<svg id="aSvg" viewBox="0 0 340 300" role="img" aria-label="Protractor. Drag the pink handle to change the angle."><circle cx="170" cy="150" r="104" fill="#fff" stroke="#14213d" stroke-width="2"/><g id="aTk" stroke="#14213d"></g><path id="aSec" stroke="none"/><path id="aArc" fill="none" stroke-width="4"/><line x1="170" y1="150" x2="274" y2="150" stroke="#2b59ff" stroke-width="6" stroke-linecap="round"/><line id="aRay" x1="170" y1="150" stroke="#ff5a4e" stroke-width="6" stroke-linecap="round"/><circle id="aDot" r="9" fill="#ff5a4e" stroke="#14213d" stroke-width="2"/><circle cx="170" cy="150" r="5" fill="#14213d"/></svg>
+<p class="hint">Drag the pink handle, use the slider, or type a number. The blue ray stays fixed.</p><label class="lbl" for="aR">Angle slider</label><input type="range" id="aR" min="0" max="360" value="55"></div>
+<div class="card"><h2>Types of angles</h2><label class="lbl" for="aN">Degrees (any number)</label><input class="big" id="aN" inputmode="decimal" autocomplete="off" value="55">
+<div class="out" id="aOut" aria-live="polite"></div><p id="aExp"></p><p class="hint" id="aNote"></p>
+<div class="chips" id="aCh">${[[30,'Acute'],[90,'Right'],[135,'Obtuse'],[180,'Straight'],[270,'Reflex'],[360,'Full turn']].map(([d,t])=>`<button data-v="${d}">${t} ${d}°</button>`).join('')}</div></div></div>
+<div class="facts">${cards([['Acute','More than 0° and less than 90°.'],['Right','Exactly 90°, like the corner of a square.'],['Obtuse','More than 90° and less than 180°.'],['Straight','Exactly 180°: a straight line.'],['Reflex','More than 180° and less than 360°.'],['Full turn','Exactly 360°. Angles can also be measured in turns: 90° is ¼ of a turn.']])}</div></section>`;
+
+const indexSec=`<section id="indices" class="topic" role="tabpanel" hidden><div class="lab"><div class="card"><h2>See the factors</h2><p class="hint">Each coloured block is one copy of the base being multiplied.</p><div class="ch" id="ixRows" aria-live="polite"></div></div>
+<div class="card"><h2>Laws of indices</h2><div class="row"><label>Base a<input id="ixA" inputmode="numeric" value="2"></label><label>Power m<input id="ixM" inputmode="numeric" value="3"></label><label>Power n<input id="ixN" inputmode="numeric" value="2"></label></div>
+<label class="lbl" for="ixL">Choose a law</label><select id="ixL"><option value="multiply">Multiply: aᵐ × aⁿ</option><option value="divide">Divide: aᵐ ÷ aⁿ</option><option value="power">Power of a power: (aᵐ)ⁿ</option><option value="zero">Zero index: aᵐ ÷ aᵐ</option></select>
+<p><span class="formula" id="ixEq"></span></p><div class="out" id="ixOut" aria-live="polite"></div><p id="ixExp"></p><p class="hint" id="ixChk"></p><p class="hint">Powers up to 40 are supported. The base can be any whole number, 1 or more.</p></div></div>
+<div class="facts">${cards([['Multiplication law','aᵐ × aⁿ = aᵐ⁺ⁿ. Keep the base and add the powers.'],['Division law','aᵐ ÷ aⁿ = aᵐ⁻ⁿ, for a ≠ 0. Keep the base and subtract the powers.'],['Power of a power','(aᵐ)ⁿ = aᵐˣⁿ. Keep the base and multiply the powers.'],['Zero index','a⁰ = 1, for a ≠ 0. Dividing a power by itself cancels every factor.']])}</div></section>`;
+
+const practiceSec=`<section id="practice" class="topic" role="tabpanel" hidden><div class="card" style="max-width:660px"><h2>Practice round</h2><div class="out" id="pQ" style="color:var(--ink)"></div><label class="lbl" for="pA">Your answer</label><input class="big" id="pA" autocomplete="off"><p><button class="go main" id="pGo">Check answer</button> <button class="go" id="pNew">New question</button></p><p id="pFb" aria-live="polite"></p><p class="hint" id="pSc"></p></div></section>`;
+
+const CHK=['Pick our topic (each group needs a different one)','Sketch the model','Build the moving parts','Label every number','Test three examples','Everyone knows their part of the script','Practise out loud twice'];
+const RUB=[['Concept understanding',2],['Creativity & design',2],['Application of mathematics',1.5],['Oral presentation skills',1.5],['Teamwork & effort',1]];
+const projectSec=`<section id="project" class="topic" role="tabpanel" hidden><div class="lab"><div class="card"><h2>Presentation</h2><div class="out" id="cd"></div><p>Thursday, 26 November 2026. Groups of 5 or 6, each with a different topic. Every member takes part in the oral explanation.</p><h3 style="margin-top:16px">Assessment rubric: 8 marks</h3>${RUB.map(([t,m])=>`<div style="margin-top:8px"><div class="ex" style="border:0;padding:0"><span>${t}</span><b>${m} ${m>1?'marks':'mark'}</b></div><div class="bar" style="width:${m/2*100}%"></div></div>`).join('')}</div>
+<div class="card"><h2>Group checklist</h2>${CHK.map((t,i)=>`<label class="ck"><input type="checkbox" data-c="${i}"> ${t}</label>`).join('')}<hr><h3>Speaker script</h3><label class="lbl" for="sT">Our topic</label><select id="sT">${TABS.slice(0,4).map(t=>`<option>${t[1]}</option>`).join('')}</select><div id="sc" style="margin-top:10px"></div></div></div>
+<div class="facts">${cards([['Suggested materials','Cardboard or foam board, coloured paper, glue, markers, number labels, rulers, protractors, split pins, and cube blocks or dice.'],['Suggested build plan','Choose a topic, sketch the model, build the moving or visual parts, add number labels, test several examples, then practise explaining.']])}</div></section>`;
+
+$('#app').innerHTML=
+ mach('squares',2,'Square numbers machine','n² = n × n',6,[['Definition','A square number can be arranged into a square with the same number of rows and columns.'],['Rule','Multiply the number by itself: n² = n × n.'],['Odd-number pattern','Each new square adds the next odd number: 1, 4, 9, 16, 25… The coral L-shape shows it.'],['Real life','Tiles laid in a square floor pattern are counted with square numbers.']])+
+ mach('cubes',3,'Cube numbers machine','n³ = n × n × n',4,[['Definition','A cube number is the product of three equal factors.'],['Rule','Multiply the number by itself, then by itself again: n³ = n × n × n.'],['Layers','A cube is n layers, each with n × n unit cubes. Slide the layers to see it.'],['Real life','Small building blocks packed into a cube make a cube-number total.']])+
+ angleSec+indexSec+practiceSec+projectSec;
+
+/* ---------- squares & cubes ---------- */
+const S2=Scene($('#squaresCv')),S3=Scene($('#cubesCv'));
+function sq(){const v=num($('#squaresN').value),o=$('#squaresOut'),e=$('#squaresExp');
+ if(!v){o.textContent='Type a number';e.textContent='Use digits, like 7, 25 or 1250.';S2.set([],1);return}
+ const I=v.i!==undefined,N=I?v.i:v.f,Q=N*N,A=I?(N<0n?-N:N):Math.abs(N),a=Math.abs(v.f),m=Math.min(12,Math.floor(a)),ex=I&&a>=1&&a<=12,t=I?fmt(N):fd(N);
+ o.textContent=`${N<0?'('+t+')':t}² = ${I?fmt(Q):fd(Q)}`;
+ e.textContent=!I?`Decimals fill only part of a tile, so the model shows ${m} × ${m} whole tiles.`:m<1?'There are no whole tiles to draw yet.':ex?`${a} rows × ${a} columns = ${a*a} tiles. The coral L adds ${2*a-1}, so ${a*a} = ${Array.from({length:a},(_,i)=>2*i+1).join(' + ')}.${N<0n?' Squaring a negative number gives a positive.':''}`:`${fmt(A)} rows × ${fmt(A)} columns = ${fmt(Q)} tiles. The model shows a 12 × 12 sample.${N<0n?' Squaring a negative number gives a positive.':''}`;
+ S2.set(vox(Math.max(m,1),.3,.15,(x,y,z)=>m>0&&z===0&&x>=0&&y>=0&&x<m&&y<m,(x,y)=>ex&&(x===m-1||y===m-1)?CO:BL),Math.max(m,1));
+ $('#squaresCap').textContent=ex?'Coral tiles: the L-shape added to the previous square.':'Drag to rotate · scroll to zoom · arrow keys work too.'}
+function cu(full){const v=num($('#cubesN').value),o=$('#cubesOut'),e=$('#cubesExp'),L=$('#cuL');
+ if(!v){o.textContent='Type a number';e.textContent='Use digits, like 7, 25 or 1250.';S3.set([],1);return}
+ const I=v.i!==undefined,N=I?v.i:v.f,Q=N*N*N,A=I?(N<0n?-N:N):Math.abs(N),a=Math.abs(v.f),m=Math.min(12,Math.floor(a)),M=Math.max(m,1),ex=I&&a>=1&&a<=12,t=I?fmt(N):fd(N);
+ if(full!==false){L.max=M;L.value=M}const l=Math.min(+L.value,M);
+ o.textContent=`${N<0?'('+t+')':t}³ = ${I?fmt(Q):fd(Q)}`;
+ e.textContent=!I?`Decimals fill only part of a unit cube, so the model shows ${m} × ${m} × ${m} whole cubes.`:m<1?'There are no whole unit cubes to draw yet.':ex?`${a} layers × ${a*a} cubes in each layer = ${a**3} unit cubes.${N<0n?' A negative number cubed stays negative.':''}`:`${fmt(A)} layers × ${fmt(A*A)} cubes in each layer = ${fmt(Q)} unit cubes. The model shows a 12 × 12 × 12 sample.${N<0n?' A negative number cubed stays negative.':''}`;
+ S3.set(vox(M,1,M/2,(x,y,z)=>m>0&&x>=0&&y>=0&&z>=0&&x<m&&y<m&&z<l,(x,y,z)=>z===l-1?CO:BL),M);
+ $('#cubesCap').textContent=m<1?'':`Showing ${l} of ${m} layers: ${l} × ${m*m} = ${l*m*m} cubes. The coral layer is the newest one.`}
+function chk(id,k){const v=num($('#'+id+'In').value),o=$('#'+id+'Res');if(!v||v.i===undefined){o.textContent=$('#'+id+'In').value.trim()?'Enter a whole number to test.':'';return}
+ const N=v.i,neg=N<0n,w=k==2?'square':'cube',p=x=>x**BigInt(k);
+ if(k==2&&neg){o.innerHTML=`<span class="bad">No.</span> ${fmt(N)} is not a square number: no whole number squared is negative.`;return}
+ const A=k==2?isqrt(N):(neg?-icbrt(-N):icbrt(N));
+ if(p(A)===N){o.innerHTML=`<span class="ok">Yes!</span> ${fmt(N)} is a ${w} number: ${A<0n?'('+fmt(A)+')':fmt(A)}${sup(k)} = ${fmt(N)}.`;return}
+ const lo=neg?A-1n:A,hi=neg?A:A+1n,b=x=>x<0n?'('+fmt(x)+')':fmt(x);
+ o.innerHTML=`<span class="bad">No.</span> ${fmt(N)} is not a ${w} number. It lies between ${b(lo)}${sup(k)} = ${fmt(p(lo))} and ${b(hi)}${sup(k)} = ${fmt(p(hi))}.`}
+$('#squaresN').oninput=sq;$('#cubesN').oninput=()=>cu();$('#cuL').oninput=()=>cu(false);
+$('#squaresIn').oninput=()=>chk('squares',2);$('#cubesIn').oninput=()=>chk('cubes',3);
+
+/* ---------- angles ---------- */
+const CX=170,CY=150,RR=104,pt=(a,r)=>[CX+r*Math.cos(a*Math.PI/180),CY-r*Math.sin(a*Math.PI/180)].map(v=>+v.toFixed(1));
+$('#aTk').innerHTML=Array.from({length:36},(_,i)=>{const a=i*10,big=a%30===0,p=pt(a,RR),q=pt(a,RR-(big?12:6)),l=pt(a,RR+17);return`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}"/>`+(big?`<text x="${l[0]}" y="${l[1]+4}" text-anchor="middle" stroke="none">${a}</text>`:'')}).join('');
+const ATY=[['Zero angle','No opening yet.','#14213d'],['Acute angle','Greater than 0° and less than 90°.','#1fb58f'],['Right angle','Exactly one quarter turn, like the corner of a square.','#2b59ff'],['Obtuse angle','Greater than 90° and less than 180°.','#d99a00'],['Straight angle','Exactly 180°: a straight line.','#ff5a4e'],['Reflex angle','Greater than 180° and less than 360°.','#8a4fff'],['Full turn','Exactly 360°: one
