@@ -151,4 +151,60 @@ $('#squaresIn').oninput=()=>chk('squares',2);$('#cubesIn').oninput=()=>chk('cube
 /* ---------- angles ---------- */
 const CX=170,CY=150,RR=104,pt=(a,r)=>[CX+r*Math.cos(a*Math.PI/180),CY-r*Math.sin(a*Math.PI/180)].map(v=>+v.toFixed(1));
 $('#aTk').innerHTML=Array.from({length:36},(_,i)=>{const a=i*10,big=a%30===0,p=pt(a,RR),q=pt(a,RR-(big?12:6)),l=pt(a,RR+17);return`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}"/>`+(big?`<text x="${l[0]}" y="${l[1]+4}" text-anchor="middle" stroke="none">${a}</text>`:'')}).join('');
+const ATY=[['Zero angle','No opening yet.','#14213d'],['Acute angle','Greater than 0° and less than 90°.','#1fb58f'],['Right angle','Exactly one quarter turn, like the corner of a square.','#2b59ff'],['Obtuse angle','Greater than 90° and less than 180°.','#d99a00'],['Straight angle','Exactly 180°: a straight line.','#ff5a4e'],['Reflex angle','Greater than 180° and less than 360°.','#8a4fff'],['Full turn','Exactly 360°: oneound"/><circle id="aDot" r="9" fill="#ff5a4e" stroke="#14213d" stroke-width="2"/><circle cx="170" cy="150" r="5" fill="#14213d"/></svg>
+<p class="hint">Drag the pink handle, use the slider, or type a number. The blue ray stays fixed.</p><label class="lbl" for="aR">Angle slider</label><input type="range" id="aR" min="0" max="360" value="55"></div>
+<div class="card"><h2>Types of angles</h2><label class="lbl" for="aN">Degrees (any number)</label><input class="big" id="aN" inputmode="decimal" autocomplete="off" value="55">
+<div class="out" id="aOut" aria-live="polite"></div><p id="aExp"></p><p class="hint" id="aNote"></p>
+<div class="chips" id="aCh">${[[30,'Acute'],[90,'Right'],[135,'Obtuse'],[180,'Straight'],[270,'Reflex'],[360,'Full turn']].map(([d,t])=>`<button data-v="${d}">${t} ${d}°</button>`).join('')}</div></div></div>
+<div class="facts">${cards([['Acute','More than 0° and less than 90°.'],['Right','Exactly 90°, like the corner of a square.'],['Obtuse','More than 90° and less than 180°.'],['Straight','Exactly 180°: a straight line.'],['Reflex','More than 180° and less than 360°.'],['Full turn','Exactly 360°. Angles can also be measured in turns: 90° is ¼ of a turn.']])}</div></section>`;
+
+const indexSec=`<section id="indices" class="topic" role="tabpanel" hidden><div class="lab"><div class="card"><h2>See the factors</h2><p class="hint">Each coloured block is one copy of the base being multiplied.</p><div class="ch" id="ixRows" aria-live="polite"></div></div>
+<div class="card"><h2>Laws of indices</h2><div class="row"><label>Base a<input id="ixA" inputmode="numeric" value="2"></label><label>Power m<input id="ixM" inputmode="numeric" value="3"></label><label>Power n<input id="ixN" inputmode="numeric" value="2"></label></div>
+<label class="lbl" for="ixL">Choose a law</label><select id="ixL"><option value="multiply">Multiply: aᵐ × aⁿ</option><option value="divide">Divide: aᵐ ÷ aⁿ</option><option value="power">Power of a power: (aᵐ)ⁿ</option><option value="zero">Zero index: aᵐ ÷ aᵐ</option></select>
+<p><span class="formula" id="ixEq"></span></p><div class="out" id="ixOut" aria-live="polite"></div><p id="ixExp"></p><p class="hint" id="ixChk"></p><p class="hint">Powers up to 40 are supported. The base can be any whole number, 1 or more.</p></div></div>
+<div class="facts">${cards([['Multiplication law','aᵐ × aⁿ = aᵐ⁺ⁿ. Keep the base and add the powers.'],['Division law','aᵐ ÷ aⁿ = aᵐ⁻ⁿ, for a ≠ 0. Keep the base and subtract the powers.'],['Power of a power','(aᵐ)ⁿ = aᵐˣⁿ. Keep the base and multiply the powers.'],['Zero index','a⁰ = 1, for a ≠ 0. Dividing a power by itself cancels every factor.']])}</div></section>`;
+
+const practiceSec=`<section id="practice" class="topic" role="tabpanel" hidden><div class="card" style="max-width:660px"><h2>Practice round</h2><div class="out" id="pQ" style="color:var(--ink)"></div><label class="lbl" for="pA">Your answer</label><input class="big" id="pA" autocomplete="off"><p><button class="go main" id="pGo">Check answer</button> <button class="go" id="pNew">New question</button></p><p id="pFb" aria-live="polite"></p><p class="hint" id="pSc"></p></div></section>`;
+
+const CHK=['Pick our topic (each group needs a different one)','Sketch the model','Build the moving parts','Label every number','Test three examples','Everyone knows their part of the script','Practise out loud twice'];
+const RUB=[['Concept understanding',2],['Creativity & design',2],['Application of mathematics',1.5],['Oral presentation skills',1.5],['Teamwork & effort',1]];
+const projectSec=`<section id="project" class="topic" role="tabpanel" hidden><div class="lab"><div class="card"><h2>Presentation</h2><div class="out" id="cd"></div><p>Thursday, 26 November 2026. Groups of 5 or 6, each with a different topic. Every member takes part in the oral explanation.</p><h3 style="margin-top:16px">Assessment rubric: 8 marks</h3>${RUB.map(([t,m])=>`<div style="margin-top:8px"><div class="ex" style="border:0;padding:0"><span>${t}</span><b>${m} ${m>1?'marks':'mark'}</b></div><div class="bar" style="width:${m/2*100}%"></div></div>`).join('')}</div>
+<div class="card"><h2>Group checklist</h2>${CHK.map((t,i)=>`<label class="ck"><input type="checkbox" data-c="${i}"> ${t}</label>`).join('')}<hr><h3>Speaker script</h3><label class="lbl" for="sT">Our topic</label><select id="sT">${TABS.slice(0,4).map(t=>`<option>${t[1]}</option>`).join('')}</select><div id="sc" style="margin-top:10px"></div></div></div>
+<div class="facts">${cards([['Suggested materials','Cardboard or foam board, coloured paper, glue, markers, number labels, rulers, protractors, split pins, and cube blocks or dice.'],['Suggested build plan','Choose a topic, sketch the model, build the moving or visual parts, add number labels, test several examples, then practise explaining.']])}</div></section>`;
+
+$('#app').innerHTML=
+ mach('squares',2,'Square numbers machine','n² = n × n',6,[['Definition','A square number can be arranged into a square with the same number of rows and columns.'],['Rule','Multiply the number by itself: n² = n × n.'],['Odd-number pattern','Each new square adds the next odd number: 1, 4, 9, 16, 25… The coral L-shape shows it.'],['Real life','Tiles laid in a square floor pattern are counted with square numbers.']])+
+ mach('cubes',3,'Cube numbers machine','n³ = n × n × n',4,[['Definition','A cube number is the product of three equal factors.'],['Rule','Multiply the number by itself, then by itself again: n³ = n × n × n.'],['Layers','A cube is n layers, each with n × n unit cubes. Slide the layers to see it.'],['Real life','Small building blocks packed into a cube make a cube-number total.']])+
+ angleSec+indexSec+practiceSec+projectSec;
+
+/* ---------- squares & cubes ---------- */
+const S2=Scene($('#squaresCv')),S3=Scene($('#cubesCv'));
+function sq(){const v=num($('#squaresN').value),o=$('#squaresOut'),e=$('#squaresExp');
+ if(!v){o.textContent='Type a number';e.textContent='Use digits, like 7, 25 or 1250.';S2.set([],1);return}
+ const I=v.i!==undefined,N=I?v.i:v.f,Q=N*N,A=I?(N<0n?-N:N):Math.abs(N),a=Math.abs(v.f),m=Math.min(12,Math.floor(a)),ex=I&&a>=1&&a<=12,t=I?fmt(N):fd(N);
+ o.textContent=`${N<0?'('+t+')':t}² = ${I?fmt(Q):fd(Q)}`;
+ e.textContent=!I?`Decimals fill only part of a tile, so the model shows ${m} × ${m} whole tiles.`:m<1?'There are no whole tiles to draw yet.':ex?`${a} rows × ${a} columns = ${a*a} tiles. The coral L adds ${2*a-1}, so ${a*a} = ${Array.from({length:a},(_,i)=>2*i+1).join(' + ')}.${N<0n?' Squaring a negative number gives a positive.':''}`:`${fmt(A)} rows × ${fmt(A)} columns = ${fmt(Q)} tiles. The model shows a 12 × 12 sample.${N<0n?' Squaring a negative number gives a positive.':''}`;
+ S2.set(vox(Math.max(m,1),.3,.15,(x,y,z)=>m>0&&z===0&&x>=0&&y>=0&&x<m&&y<m,(x,y)=>ex&&(x===m-1||y===m-1)?CO:BL),Math.max(m,1));
+ $('#squaresCap').textContent=ex?'Coral tiles: the L-shape added to the previous square.':'Drag to rotate · scroll to zoom · arrow keys work too.'}
+function cu(full){const v=num($('#cubesN').value),o=$('#cubesOut'),e=$('#cubesExp'),L=$('#cuL');
+ if(!v){o.textContent='Type a number';e.textContent='Use digits, like 7, 25 or 1250.';S3.set([],1);return}
+ const I=v.i!==undefined,N=I?v.i:v.f,Q=N*N*N,A=I?(N<0n?-N:N):Math.abs(N),a=Math.abs(v.f),m=Math.min(12,Math.floor(a)),M=Math.max(m,1),ex=I&&a>=1&&a<=12,t=I?fmt(N):fd(N);
+ if(full!==false){L.max=M;L.value=M}const l=Math.min(+L.value,M);
+ o.textContent=`${N<0?'('+t+')':t}³ = ${I?fmt(Q):fd(Q)}`;
+ e.textContent=!I?`Decimals fill only part of a unit cube, so the model shows ${m} × ${m} × ${m} whole cubes.`:m<1?'There are no whole unit cubes to draw yet.':ex?`${a} layers × ${a*a} cubes in each layer = ${a**3} unit cubes.${N<0n?' A negative number cubed stays negative.':''}`:`${fmt(A)} layers × ${fmt(A*A)} cubes in each layer = ${fmt(Q)} unit cubes. The model shows a 12 × 12 × 12 sample.${N<0n?' A negative number cubed stays negative.':''}`;
+ S3.set(vox(M,1,M/2,(x,y,z)=>m>0&&x>=0&&y>=0&&z>=0&&x<m&&y<m&&z<l,(x,y,z)=>z===l-1?CO:BL),M);
+ $('#cubesCap').textContent=m<1?'':`Showing ${l} of ${m} layers: ${l} × ${m*m} = ${l*m*m} cubes. The coral layer is the newest one.`}
+function chk(id,k){const v=num($('#'+id+'In').value),o=$('#'+id+'Res');if(!v||v.i===undefined){o.textContent=$('#'+id+'In').value.trim()?'Enter a whole number to test.':'';return}
+ const N=v.i,neg=N<0n,w=k==2?'square':'cube',p=x=>x**BigInt(k);
+ if(k==2&&neg){o.innerHTML=`<span class="bad">No.</span> ${fmt(N)} is not a square number: no whole number squared is negative.`;return}
+ const A=k==2?isqrt(N):(neg?-icbrt(-N):icbrt(N));
+ if(p(A)===N){o.innerHTML=`<span class="ok">Yes!</span> ${fmt(N)} is a ${w} number: ${A<0n?'('+fmt(A)+')':fmt(A)}${sup(k)} = ${fmt(N)}.`;return}
+ const lo=neg?A-1n:A,hi=neg?A:A+1n,b=x=>x<0n?'('+fmt(x)+')':fmt(x);
+ o.innerHTML=`<span class="bad">No.</span> ${fmt(N)} is not a ${w} number. It lies between ${b(lo)}${sup(k)} = ${fmt(p(lo))} and ${b(hi)}${sup(k)} = ${fmt(p(hi))}.`}
+$('#squaresN').oninput=sq;$('#cubesN').oninput=()=>cu();$('#cuL').oninput=()=>cu(false);
+$('#squaresIn').oninput=()=>chk('squares',2);$('#cubesIn').oninput=()=>chk('cubes',3);
+
+/* ---------- angles ---------- */
+const CX=170,CY=150,RR=104,pt=(a,r)=>[CX+r*Math.cos(a*Math.PI/180),CY-r*Math.sin(a*Math.PI/180)].map(v=>+v.toFixed(1));
+$('#aTk').innerHTML=Array.from({length:36},(_,i)=>{const a=i*10,big=a%30===0,p=pt(a,RR),q=pt(a,RR-(big?12:6)),l=pt(a,RR+17);return`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}"/>`+(big?`<text x="${l[0]}" y="${l[1]+4}" text-anchor="middle" stroke="none">${a}</text>`:'')}).join('');
 const ATY=[['Zero angle','No opening yet.','#14213d'],['Acute angle','Greater than 0° and less than 90°.','#1fb58f'],['Right angle','Exactly one quarter turn, like the corner of a square.','#2b59ff'],['Obtuse angle','Greater than 90° and less than 180°.','#d99a00'],['Straight angle','Exactly 180°: a straight line.','#ff5a4e'],['Reflex angle','Greater than 180° and less than 360°.','#8a4fff'],['Full turn','Exactly 360°: one
